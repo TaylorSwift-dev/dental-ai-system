@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Custom scrollbars for professional desktop experience */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Voice waveform keyframes */
+@keyframes voiceWave {
+  0%, 100% {
+    transform: scaleY(0.2);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-wave-bar-1 { animation: voiceWave 0.8s ease-in-out infinite 0.1s; }
+.animate-wave-bar-2 { animation: voiceWave 0.7s ease-in-out infinite 0.25s; }
+.animate-wave-bar-3 { animation: voiceWave 0.9s ease-in-out infinite 0.15s; }
+.animate-wave-bar-4 { animation: voiceWave 0.75s ease-in-out infinite 0.35s; }
+.animate-wave-bar-5 { animation: voiceWave 0.85s ease-in-out infinite 0.05s; }
+.animate-wave-bar-6 { animation: voiceWave 0.65s ease-in-out infinite 0.2s; }
+.animate-wave-bar-7 { animation: voiceWave 0.95s ease-in-out infinite 0.3s; }
+
