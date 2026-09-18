@@ -1,4 +1,21 @@
-import { Patient, Appointment, ClinicalNoteDraft, ReportItem, TreatmentPlan, FollowUpItem, BillingInvoice, ClinicMessage, Doctor, CallLogItem, ClinicNotification, UpcomingCallItem } from '../types';
+import { 
+  Patient, 
+  Appointment, 
+  ClinicalNoteDraft, 
+  ReportItem, 
+  TreatmentPlan, 
+  FollowUpItem, 
+  BillingInvoice, 
+  ClinicMessage, 
+  Doctor, 
+  CallLogItem, 
+  ClinicNotification, 
+  UpcomingCallItem,
+  AuthUser,
+  Prescription,
+  MedicalNote,
+  DentalTreatmentRecord
+} from '../types';
 
 export const INITIAL_PATIENTS: Patient[] = [
   {
@@ -1728,6 +1745,213 @@ export const INITIAL_UPCOMING_CALLS: UpcomingCallItem[] = [
     treatment: 'Partial Denture Polish',
     callStatus: 'No Answer',
     notes: 'Rings out, sent reminder SMS'
+  }
+];
+
+export const DEFAULT_DOCTOR_USER: AuthUser = {
+  id: 'DOC-1',
+  name: 'Dr. Sarah Johnson',
+  email: 'sarah.j@smiledental.com',
+  role: 'doctor',
+  avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300',
+  title: 'Lead Dental Surgeon & Endodontist',
+  specialty: 'Endodontics & Restorative Dentistry',
+  operatory: 'Operatory 1 (Chair A)'
+};
+
+export const DEFAULT_RECEPTIONIST_USER: AuthUser = {
+  id: 'REC-1',
+  name: 'Elena Vance',
+  email: 'elena.vance@smiledental.com',
+  role: 'receptionist',
+  avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300',
+  title: 'Head Receptionist & Patient Care Coordinator',
+  operatory: 'Front Desk Live Station'
+};
+
+export const INITIAL_PRESCRIPTIONS: Prescription[] = [
+  {
+    id: 'RX-101',
+    patientId: 'P-1001',
+    patientName: 'Aarav Mehta',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '13-Sep-2026',
+    diagnosis: 'Acute Pulpitis #19 — Post RCT Sitting 1',
+    medicines: [
+      {
+        id: 'M-1',
+        name: 'Amoxicillin 500mg',
+        dosage: '1 capsule',
+        frequency: '1-0-1 (Twice daily)',
+        duration: '5 days',
+        instructions: 'Take after meals. Complete full course.'
+      },
+      {
+        id: 'M-2',
+        name: 'Ketorol DT 10mg',
+        dosage: '1 tablet dispersed in water',
+        frequency: 'SOS for pain (Max 3/day)',
+        duration: '3 days',
+        instructions: 'Take only if severe pain occurs.'
+      },
+      {
+        id: 'M-3',
+        name: 'Chlorhexidine Gluconate 0.2% Mouthwash',
+        dosage: '10 ml undiluted',
+        frequency: 'Twice daily',
+        duration: '7 days',
+        instructions: 'Rinse vigorously for 60 seconds after brushing.'
+      }
+    ],
+    notes: 'Soft diet advised for 48 hours. Avoid chewing hard foods on the lower left quadrant.'
+  },
+  {
+    id: 'RX-102',
+    patientId: 'P-1002',
+    patientName: 'Sneha Patel',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '12-Sep-2026',
+    diagnosis: 'Deep Occlusal Caries #14',
+    medicines: [
+      {
+        id: 'M-4',
+        name: 'Ibuprofen 400mg + Paracetamol 325mg',
+        dosage: '1 tablet',
+        frequency: '1-0-1',
+        duration: '3 days',
+        instructions: 'Take after meals.'
+      }
+    ],
+    notes: 'Composite resin filling placed. Mild sensitivity expected for 48 hours.'
+  },
+  {
+    id: 'RX-103',
+    patientId: 'P-1003',
+    patientName: 'Vikram Malhotra',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '11-Sep-2026',
+    diagnosis: 'Subgingival Scaling & Root Planing',
+    medicines: [
+      {
+        id: 'M-5',
+        name: 'Metronidazole 400mg',
+        dosage: '1 tablet',
+        frequency: '1-1-1 (Three times a day)',
+        duration: '5 days',
+        instructions: 'Avoid alcohol completely during course.'
+      },
+      {
+        id: 'M-6',
+        name: 'Hexidine Mouth Rinse',
+        dosage: '15 ml',
+        frequency: 'Twice daily',
+        duration: '10 days',
+        instructions: 'Do not eat or drink for 30 minutes after rinsing.'
+      }
+    ],
+    notes: 'Periodontal maintenance recalled in 6 weeks.'
+  }
+];
+
+export const INITIAL_MEDICAL_NOTES: MedicalNote[] = [
+  {
+    id: 'NOTE-101',
+    patientId: 'P-1001',
+    patientName: 'Aarav Mehta',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '13-Sep-2026',
+    chiefComplaint: 'Severe throbbing pain in lower left molar, worsening at night and upon consuming cold drinks.',
+    examinationFindings: 'Tooth #19 exhibits extensive deep dentinal caries involving mesial pulp horn. Tender to vertical percussion (+2). Cold test triggers lingering severe pain > 30s. Periapical radiograph confirms radiolucency widening at distal root apex.',
+    diagnosis: 'Symptomatic Irreversible Pulpitis with Symptomatic Apical Periodontitis #19.',
+    clinicalNotes: 'Administered 2% Lignocaine with 1:80,000 adrenaline (IANB). Rubber dam isolation placed. Caries excavated. Access cavity prepared. Working lengths: MB 21mm, ML 21mm, Distal 21.5mm. Biomechanical preparation completed up to ProTaper Gold F2. Canal irrigated with 3% NaOCl and 17% EDTA. Calcium hydroxide paste placed as intracanal medicament. Sealed with Cavit G.',
+    toothNumbers: ['#19']
+  },
+  {
+    id: 'NOTE-102',
+    patientId: 'P-1002',
+    patientName: 'Sneha Patel',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '12-Sep-2026',
+    chiefComplaint: 'Food entrapment and mild sensitivity in upper right premolar region.',
+    examinationFindings: 'Tooth #14 shows cavitated dark brown caries on occlusal surface. Cold test normal response, no lingering pain. Percussion negative.',
+    diagnosis: 'Moderate Chronic Enamel-Dentin Caries #14.',
+    clinicalNotes: 'Caries completely excavated with slow-speed round bur. Total etch technique with 37% phosphoric acid. Single Bond universal adhesive light cured for 10s. 3M Filtek Z350 XT A2 shade composite layered in 2mm increments. Finishing done with fine diamond burs and Enhance polishing cups.',
+    toothNumbers: ['#14']
+  },
+  {
+    id: 'NOTE-103',
+    patientId: 'P-1004',
+    patientName: 'Ananya Roy',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '10-Sep-2026',
+    chiefComplaint: 'Desires aesthetic smile improvement and brighter shade for upcoming family wedding.',
+    examinationFindings: 'Generalized mild extrinsic discoloration (Vita shade A3.5). Sound enamel integrity without active carious lesions. Mild supragingival calculus in lower anteriors.',
+    diagnosis: 'Extrinsic Enamel Staining with Generalized Marginal Gingivitis.',
+    clinicalNotes: 'Ultrasonic scaling and prophy paste polishing performed first. Patient counseled on in-office 37.5% Hydrogen Peroxide whitening vs take-home custom trays. Scheduled for 3-cycle in-office whitening next Monday.',
+    toothNumbers: ['Full Mouth']
+  }
+];
+
+export const INITIAL_DENTAL_TREATMENTS: DentalTreatmentRecord[] = [
+  {
+    id: 'TRT-1',
+    patientId: 'P-1001',
+    patientName: 'Aarav Mehta',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '13-Sep-2026',
+    treatmentName: 'Root Canal Treatment (Sitting 1 of 2)',
+    toothNumbers: ['#19'],
+    status: 'In Progress',
+    cost: 5000,
+    notes: 'BMP complete. Next sitting: Obturation & core buildup.'
+  },
+  {
+    id: 'TRT-2',
+    patientId: 'P-1002',
+    patientName: 'Sneha Patel',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '12-Sep-2026',
+    treatmentName: 'Tooth Filing (Composite Resin)',
+    toothNumbers: ['#14'],
+    status: 'Completed',
+    cost: 1500,
+    notes: 'Cavity restored. Occlusion checked and adjusted.'
+  },
+  {
+    id: 'TRT-3',
+    patientId: 'P-1003',
+    patientName: 'Vikram Malhotra',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '11-Sep-2026',
+    treatmentName: 'Routine Ultrasonic Scaling',
+    toothNumbers: ['Full Mouth'],
+    status: 'Completed',
+    cost: 1000,
+    notes: 'Subgingival scaling and polishing completed.'
+  },
+  {
+    id: 'TRT-4',
+    patientId: 'P-1004',
+    patientName: 'Ananya Roy',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '18-Sep-2026',
+    treatmentName: 'In-Office Teeth Whitening',
+    toothNumbers: ['#13-#23', '#33-#43'],
+    status: 'Planned',
+    cost: 4000,
+    notes: 'Requires gingival barrier application and 3x 15min cycles.'
+  },
+  {
+    id: 'TRT-5',
+    patientId: 'P-1005',
+    patientName: 'Rajesh Gupta',
+    doctorName: 'Dr. Sarah Johnson',
+    date: '20-Sep-2026',
+    treatmentName: 'Zirconia Crown Placement',
+    toothNumbers: ['#36'],
+    status: 'Planned',
+    cost: 8000,
+    notes: 'Impression taken. Waiting for lab dispatch.'
   }
 ];
 

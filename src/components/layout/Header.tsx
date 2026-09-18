@@ -9,7 +9,8 @@ import {
   Clock, 
   CreditCard, 
   AlertCircle, 
-  Phone
+  Phone,
+  LogOut
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -19,7 +20,11 @@ export const Header: React.FC = () => {
     markNotificationRead, 
     clearAllNotifications, 
     openGlobalSearch,
-    setCurrentNav
+    setCurrentNav,
+    currentUser,
+    userRole,
+    switchRole,
+    logout
   } = useApp();
 
   const [isNotifOpen, setIsNotifOpen] = useState<boolean>(false);
@@ -170,23 +175,39 @@ export const Header: React.FC = () => {
           )}
         </div>
 
-        {/* Receptionist Profile Badge */}
+
+
+        {/* User Profile Badge */}
         <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
           <img
-            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150"
-            alt="Elena Vance"
-            className="w-9 h-9 rounded-full object-cover ring-2 ring-sky-300 shadow-2xs"
+            src={currentUser?.avatar || (userRole === 'doctor' 
+              ? 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150' 
+              : 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150')}
+            alt={currentUser?.name || 'User'}
+            className="w-9 h-9 rounded-xl object-cover ring-2 ring-sky-300 shadow-2xs"
           />
           <div className="hidden md:block text-left">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-black text-slate-900">Elena Vance</span>
+              <span className="text-xs font-black text-slate-900">
+                {currentUser?.name || (userRole === 'doctor' ? 'Dr. Sarah Johnson' : 'Elena Vance')}
+              </span>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             </div>
             <span className="text-[10px] font-bold text-sky-600 uppercase tracking-wider block -mt-0.5">
-              Front Desk Lead
+              {userRole === 'doctor' ? 'Operatory 1 • Doctor' : 'Front Desk Lead'}
             </span>
           </div>
         </div>
+
+        {/* Header Logout Action Button */}
+        <button
+          onClick={logout}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100/90 border border-rose-200 text-rose-700 text-xs font-bold transition-all shadow-2xs ml-1"
+          title="Sign out of clinic"
+        >
+          <LogOut className="w-3.5 h-3.5 text-rose-600" />
+          <span className="hidden sm:inline">Logout</span>
+        </button>
       </div>
     </header>
   );

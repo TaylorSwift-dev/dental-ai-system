@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   UserRole, 
   NavItem, 
@@ -15,7 +16,11 @@ import {
   CallLogItem,
   ClinicNotification,
   UpcomingCallItem,
-  CallStatus
+  CallStatus,
+  AuthUser,
+  Prescription,
+  MedicalNote,
+  DentalTreatmentRecord
 } from '../types';
 import { 
   INITIAL_PATIENTS, 
@@ -29,7 +34,12 @@ import {
   INITIAL_DOCTORS,
   INITIAL_CALL_LOGS,
   INITIAL_NOTIFICATIONS,
-  INITIAL_UPCOMING_CALLS
+  INITIAL_UPCOMING_CALLS,
+  DEFAULT_DOCTOR_USER,
+  DEFAULT_RECEPTIONIST_USER,
+  INITIAL_PRESCRIPTIONS,
+  INITIAL_MEDICAL_NOTES,
+  INITIAL_DENTAL_TREATMENTS
 } from '../data/mockData';
 
 interface ToastInfo {
@@ -49,6 +59,13 @@ export interface ActiveCallInfo {
 }
 
 interface AppContextType {
+  // Authentication & Role
+  isLoggedIn: boolean;
+  currentUser: AuthUser | null;
+  login: (role: 'doctor' | 'receptionist', userDetails?: Partial<AuthUser>) => void;
+  logout: () => void;
+  switchRole: (role: 'doctor' | 'receptionist') => void;
+
   userRole: UserRole;
   setUserRole: (role: UserRole) => void;
   currentNav: NavItem;
@@ -144,14 +161,179 @@ interface AppContextType {
   openVoiceModal: () => void;
   closeVoiceModal: () => void;
   executeVoiceAction: (command: string) => void;
+
+  // Doctor Clinical Extensions
+  prescriptions: Prescription[];
+  addPrescription: (data: Partial<Prescription>) => Prescription;
+  medicalNotes: MedicalNote[];
+  addMedicalNote: (data: Partial<MedicalNote>) => MedicalNote;
+  dentalTreatments: DentalTreatmentRecord[];
+  addDentalTreatment: (data: Partial<DentalTreatmentRecord>) => void;
+  updateDentalTreatmentStatus: (id: string, status: DentalTreatmentRecord['status']) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Default role to 'receptionist' for front desk workflow
-  const [userRole, setUserRole] = useState<UserRole>('receptionist');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Authentication State
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return localStorage.getItem('aura_is_logged_in') === 'true';
+  });
+
+  const [userRole, setUserRole] = useState<UserRole>(() => {
+    const savedRole = localStorage.getItem('aura_user_role');
+    return (savedRole as UserRole) || 'receptionist';
+  });
+
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    const isAuth = localStorage.getItem('aura_is_logged_in') === 'true';
+    if (!isAuth) return null;
+    const savedRole = localStorage.getItem('aura_user_role');
+    if (savedRole === 'doctor') return DEFAULT_DOCTOR_USER;
+    if (savedRole === 'receptionist') return DEFAULT_RECEPTIONIST_USER;
+    return null;
+  });
+
   const [currentNav, setCurrentNav] = useState<NavItem>('dashboard');
+
+  // Clinical records state
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>(INITIAL_PRESCRIPTIONS);
+  const [medicalNotes, setMedicalNotes] = useState<MedicalNote[]>(INITIAL_MEDICAL_NOTES);
+  const [dentalTreatments, setDentalTreatments] = useState<DentalTreatmentRecord[]>(INITIAL_DENTAL_TREATMENTS);
+
+  // Browser History & Popstate synchronization (for browser back button to login)
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/login') {
+        localStorage.removeItem('aura_is_logged_in');
+        localStorage.removeItem('aura_user_role');
+        setIsLoggedIn(false);
+        setCurrentUser(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Synchronize browser URL with currentNav
+  useEffect(() => {
+    const path = location.pathname;
+
+    if (path.startsWith('/doctor/')) {
+      const sub = path.replace('/doctor/', '');
+      if (sub) setCurrentNav(sub as NavItem);
+    } else if (path === '/doctor') {
+      setCurrentNav('dashboard');
+    } else if (path.startsWith('/receptionist/')) {
+      const sub = path.replace('/receptionist/', '');
+      if (sub) setCurrentNav(sub as NavItem);
+    } else if (path === '/receptionist') {
+      setCurrentNav('dashboard');
+    }
+  }, [location.pathname]);
+
+  const login = (role: 'doctor' | 'receptionist', userDetails?: Partial<AuthUser>) => {
+    const user = role === 'doctor' 
+      ? { ...DEFAULT_DOCTOR_USER, ...userDetails }
+      : { ...DEFAULT_RECEPTIONIST_USER, ...userDetails };
+    
+    // Save to localStorage
+    localStorage.setItem('aura_is_logged_in', 'true');
+    localStorage.setItem('aura_user_role', role);
+
+    // Update state
+    setIsLoggedIn(true);
+    setUserRole(role);
+    setCurrentUser(user);
+    setCurrentNav('dashboard');
+
+    // Immediate navigation to the respective dashboard
+    navigate(`/${role}`, { replace: false });
+    showToast(`Welcome back, ${user.name}!`, 'success');
+  };
+
+  const logout = () => {
+    localStorage.removeItem('aura_is_logged_in');
+    localStorage.removeItem('aura_user_role');
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    navigate('/login', { replace: true });
+    showToast('You have been logged out successfully.', 'info');
+  };
+
+  // Deprecated switchRole placeholder kept for type stability
+  const switchRole = (_role: 'doctor' | 'receptionist') => {
+    logout();
+  };
+
+  const handleSetCurrentNav = (nav: NavItem) => {
+    setCurrentNav(nav);
+    const targetPath = nav === 'dashboard' ? `/${userRole}` : `/${userRole}/${nav}`;
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
+  };
+
+  const addPrescription = (data: Partial<Prescription>): Prescription => {
+    const newRx: Prescription = {
+      id: `RX-${Date.now().toString().slice(-4)}`,
+      patientId: data.patientId || selectedPatientId,
+      patientName: data.patientName || selectedPatient?.name || 'Walk-in Patient',
+      doctorName: currentUser?.name || 'Dr. Sarah Johnson',
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      diagnosis: data.diagnosis || 'Clinical evaluation',
+      medicines: data.medicines || [],
+      notes: data.notes || ''
+    };
+    setPrescriptions(prev => [newRx, ...prev]);
+    showToast(`Prescription ${newRx.id} generated successfully!`, 'success');
+    return newRx;
+  };
+
+  const addMedicalNote = (data: Partial<MedicalNote>): MedicalNote => {
+    const newNote: MedicalNote = {
+      id: `NOTE-${Date.now().toString().slice(-4)}`,
+      patientId: data.patientId || selectedPatientId,
+      patientName: data.patientName || selectedPatient?.name || 'Walk-in Patient',
+      doctorName: currentUser?.name || 'Dr. Sarah Johnson',
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      chiefComplaint: data.chiefComplaint || '',
+      examinationFindings: data.examinationFindings || '',
+      diagnosis: data.diagnosis || '',
+      clinicalNotes: data.clinicalNotes || '',
+      toothNumbers: data.toothNumbers || []
+    };
+    setMedicalNotes(prev => [newNote, ...prev]);
+    showToast(`Clinical note saved for ${newNote.patientName}!`, 'success');
+    return newNote;
+  };
+
+  const addDentalTreatment = (data: Partial<DentalTreatmentRecord>) => {
+    const newRecord: DentalTreatmentRecord = {
+      id: `TRT-${Date.now().toString().slice(-4)}`,
+      patientId: data.patientId || selectedPatientId,
+      patientName: data.patientName || selectedPatient?.name || 'Walk-in Patient',
+      doctorName: currentUser?.name || 'Dr. Sarah Johnson',
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      treatmentName: data.treatmentName || 'Dental Procedure',
+      toothNumbers: data.toothNumbers || [],
+      status: data.status || 'Planned',
+      cost: data.cost || 1000,
+      notes: data.notes || ''
+    };
+    setDentalTreatments(prev => [newRecord, ...prev]);
+    showToast(`Treatment "${newRecord.treatmentName}" recorded!`, 'success');
+  };
+
+  const updateDentalTreatmentStatus = (id: string, status: DentalTreatmentRecord['status']) => {
+    setDentalTreatments(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+    showToast(`Treatment status updated to ${status}!`, 'info');
+  };
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
   // Entities
@@ -687,7 +869,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         userRole,
         setUserRole,
         currentNav,
-        setCurrentNav,
+        setCurrentNav: handleSetCurrentNav,
         isSidebarCollapsed,
         toggleSidebar,
 
@@ -774,7 +956,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isGlobalVoiceModalOpen,
         openVoiceModal,
         closeVoiceModal,
-        executeVoiceAction
+        executeVoiceAction,
+
+        // Auth
+        isLoggedIn,
+        currentUser,
+        login,
+        logout,
+        switchRole,
+
+        // Doctor Clinical Extensions
+        prescriptions,
+        addPrescription,
+        medicalNotes,
+        addMedicalNote,
+        dentalTreatments,
+        addDentalTreatment,
+        updateDentalTreatmentStatus
       }}
     >
       {children}

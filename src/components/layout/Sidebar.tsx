@@ -7,8 +7,6 @@ import {
   Users, 
   UserCheck, 
   Stethoscope, 
-  SearchCheck, 
-  Calendar, 
   CreditCard, 
   PhoneCall, 
   BarChart3, 
@@ -16,8 +14,11 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sparkles,
-  Phone,
-  HelpCircle
+  Pill,
+  FileText,
+  Bell,
+  LogOut,
+  ArrowRightLeft
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -28,15 +29,20 @@ export const Sidebar: React.FC = () => {
     toggleSidebar,
     appointments,
     invoices,
-    callLogs,
-    startCall
+    notifications,
+    userRole,
+    currentUser,
+    logout,
+    switchRole
   } = useApp();
 
   const waitingCount = appointments.filter(a => a.status === 'waiting').length;
   const todayCount = appointments.filter(a => a.date === '2026-09-13' && a.status !== 'cancelled').length;
   const pendingInvoicesCount = invoices.filter(i => i.pending > 0).length;
+  const unreadNotifications = notifications.filter(n => !n.read).length;
 
-  const navItems: Array<{ 
+  // Receptionist Sidebar Specification (Step 7)
+  const receptionistNavItems: Array<{ 
     id: NavItem; 
     label: string; 
     icon: React.ComponentType<{ className?: string }>; 
@@ -45,17 +51,33 @@ export const Sidebar: React.FC = () => {
   }> = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'appointments', label: 'Appointments', icon: CalendarDays, badge: todayCount, badgeColor: 'bg-sky-100 text-sky-800' },
-    { id: 'waiting-room', label: 'Waiting Room', icon: UserCheck, badge: waitingCount, badgeColor: 'bg-amber-100 text-amber-800 animate-pulse' },
     { id: 'patients', label: 'Patients', icon: Users },
-    { id: 'doctors', label: 'Doctors & Schedules', icon: Stethoscope },
-    { id: 'availability', label: 'Check Availability', icon: SearchCheck },
-    { id: 'calendar', label: 'Clinic Calendar', icon: Calendar },
-    { id: 'billing', label: 'Billing & Payments', icon: CreditCard, badge: pendingInvoicesCount, badgeColor: 'bg-rose-100 text-rose-800' },
-    { id: 'calls', label: 'Calls & Reminders', icon: PhoneCall },
-    { id: 'reports', label: 'Reports & Stats', icon: BarChart3 },
+    { id: 'doctors', label: 'Doctors', icon: Stethoscope },
+    { id: 'billing', label: 'Billing', icon: CreditCard, badge: pendingInvoicesCount, badgeColor: 'bg-rose-100 text-rose-800' },
+    { id: 'calls', label: 'Reminders', icon: PhoneCall },
     { id: 'portfolio', label: 'Product Portfolio', icon: Sparkles },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  // Doctor Sidebar Specification (Step 7)
+  const doctorNavItems: Array<{ 
+    id: NavItem; 
+    label: string; 
+    icon: React.ComponentType<{ className?: string }>; 
+    badge?: number; 
+    badgeColor?: string 
+  }> = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'appointments', label: 'Appointments', icon: CalendarDays, badge: todayCount, badgeColor: 'bg-sky-100 text-sky-800' },
+    { id: 'patients', label: 'Patients', icon: Users },
+    { id: 'treatments', label: 'Treatments', icon: Stethoscope },
+    { id: 'prescriptions', label: 'Prescriptions', icon: Pill },
+    { id: 'medical-notes', label: 'Medical Notes', icon: FileText },
+    { id: 'reports', label: 'Reports', icon: BarChart3 },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  const activeNavItems = userRole === 'doctor' ? doctorNavItems : receptionistNavItems;
 
   return (
     <>
@@ -79,10 +101,10 @@ export const Sidebar: React.FC = () => {
             {!isSidebarCollapsed && (
               <div className="flex flex-col truncate">
                 <span className="font-black text-base tracking-tight text-slate-900 leading-tight">
-                  SmileCare<span className="text-sky-600 ml-0.5">Dental</span>
+                  AuraDental<span className="text-sky-600 ml-0.5">OS</span>
                 </span>
-                <span className="text-[11px] text-sky-700 font-bold tracking-wide uppercase">
-                  Reception OS
+                <span className="text-[10px] text-sky-700 font-extrabold tracking-wide uppercase">
+                  {userRole === 'doctor' ? 'Doctor Suite' : 'Reception OS'}
                 </span>
               </div>
             )}
@@ -97,9 +119,25 @@ export const Sidebar: React.FC = () => {
           </button>
         </div>
 
+        {/* Role Indicator Banner */}
+        {!isSidebarCollapsed && (
+          <div className="px-3 pt-3">
+            <div className={`p-2 rounded-2xl flex items-center justify-between text-xs font-bold ${
+              userRole === 'doctor' 
+                ? 'bg-sky-50/80 border border-sky-200 text-sky-800' 
+                : 'bg-cyan-50/80 border border-cyan-200 text-cyan-800'
+            }`}>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="capitalize">{userRole} Portal</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Navigation List */}
         <div className="flex-1 overflow-y-auto py-3 px-2.5 space-y-1">
-          {navItems.map((item) => {
+          {activeNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentNav === item.id;
             return (
@@ -131,29 +169,45 @@ export const Sidebar: React.FC = () => {
           })}
         </div>
 
-        {/* Bottom Fast Action Widget */}
-        {!isSidebarCollapsed && (
-          <div className="p-3 m-2.5 bg-gradient-to-br from-sky-50 to-cyan-50/60 rounded-2xl border border-sky-100">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[11px] font-extrabold text-sky-900">Front Desk Dial Pad</span>
+        {/* User Profile & Logout Bottom Section */}
+        <div className="p-3 border-t border-sky-100 bg-slate-50/50">
+          {!isSidebarCollapsed ? (
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <img
+                  src={currentUser?.avatar || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200'}
+                  alt={currentUser?.name || 'User'}
+                  className="w-9 h-9 rounded-xl object-cover ring-1 ring-sky-300 shrink-0"
+                />
+                <div className="min-w-0">
+                  <div className="text-xs font-black text-slate-900 truncate">
+                    {currentUser?.name || (userRole === 'doctor' ? 'Dr. Sarah Johnson' : 'Elena Vance')}
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-semibold truncate capitalize">
+                    {currentUser?.title || userRole}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={logout}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors shrink-0"
+                title="Sign out of clinic"
+              >
+                <LogOut className="w-4 h-4 text-rose-500" />
+                <span>Logout</span>
+              </button>
             </div>
-            <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
-              Need to contact a patient or follow up on tomorrow's visits?
-            </p>
+          ) : (
             <button
-              onClick={() => startCall({
-                name: 'Quick Dial',
-                phone: '+91 98201 44521',
-                treatment: 'Patient Follow-up'
-              })}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-white hover:bg-sky-600 hover:text-white text-sky-700 font-bold text-xs rounded-xl border border-sky-200/80 shadow-xs transition-all"
+              onClick={logout}
+              className="w-full flex items-center justify-center p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+              title="Sign out of clinic"
             >
-              <Phone className="w-3.5 h-3.5" />
-              <span>Open Call Dialer</span>
+              <LogOut className="w-4 h-4" />
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
     </>
   );

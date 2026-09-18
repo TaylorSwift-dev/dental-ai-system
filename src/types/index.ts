@@ -10,11 +10,16 @@ export type NavItem =
   | 'calendar'
   | 'billing'
   | 'calls'
+  | 'reminders'
+  | 'notifications'
   | 'reports'
   | 'portfolio'
   | 'records'
   | 'assistant'
   | 'treatment-plans'
+  | 'treatments'
+  | 'prescriptions'
+  | 'medical-notes'
   | 'follow-ups'
   | 'messages'
   | 'analytics'
@@ -315,4 +320,61 @@ export const DENTAL_TREATMENTS: TreatmentService[] = [
   { id: 'teeth-whitening', name: 'Teeth Whitening (In-Office)', defaultPrice: 4000, specialty: 'Aesthetic Dentistry', duration: '45 mins', icon: '💎' },
   { id: 'tooth-extraction', name: 'Tooth Extraction (Surgical)', defaultPrice: 1200, specialty: 'Oral Surgery & Implants', duration: '30 mins', icon: '🩹' }
 ];
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'doctor' | 'receptionist';
+  avatar: string;
+  title: string;
+  specialty?: string;
+  operatory?: string;
+}
+
+export interface PrescriptionMedicine {
+  id: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+}
+
+export interface Prescription {
+  id: string;
+  patientId: string;
+  patientName: string;
+  doctorName: string;
+  date: string;
+  diagnosis: string;
+  medicines: PrescriptionMedicine[];
+  notes?: string;
+}
+
+export interface MedicalNote {
+  id: string;
+  patientId: string;
+  patientName: string;
+  doctorName: string;
+  date: string;
+  chiefComplaint: string;
+  examinationFindings: string;
+  diagnosis: string;
+  clinicalNotes: string;
+  toothNumbers?: string[];
+}
+
+export interface DentalTreatmentRecord {
+  id: string;
+  patientId: string;
+  patientName: string;
+  doctorName: string;
+  date: string;
+  treatmentName: string;
+  toothNumbers: string[];
+  status: 'Planned' | 'In Progress' | 'Completed';
+  cost: number;
+  notes?: string;
+}
 

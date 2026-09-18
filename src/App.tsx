@@ -1,9 +1,13 @@
 import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ToastContainer } from './components/common/ToastContainer';
 import { VoiceModal } from './components/common/VoiceModal';
+
+// Unified Login Page
+import { LoginPage } from './components/auth/LoginPage';
 
 // Dedicated Receptionist Screens
 import { ReceptionistMainDashboard } from './components/receptionist/ReceptionistMainDashboard';
@@ -18,6 +22,24 @@ import { RemindersAndCallsScreen } from './components/communication/RemindersAnd
 import { ReceptionistReportsScreen } from './components/reports/ReceptionistReportsScreen';
 import { PortfolioWebsite } from './components/portfolio/PortfolioWebsite';
 
+// Dedicated Doctor Screens
+import { DoctorDashboard } from './components/dashboard/DoctorDashboard';
+import { DoctorAppointmentsScreen } from './components/appointments/DoctorAppointmentsScreen';
+import { TreatmentsScreen } from './components/treatments/TreatmentsScreen';
+import { PrescriptionsScreen } from './components/prescriptions/PrescriptionsScreen';
+import { MedicalNotesScreen } from './components/medical-notes/MedicalNotesScreen';
+import { DoctorReportsScreen } from './components/reports/DoctorReportsScreen';
+import { ConsultationScreen } from './components/consultation/ConsultationScreen';
+import { TreatmentPlanScreen } from './components/treatment-plan/TreatmentPlanScreen';
+import { FollowUpScreen } from './components/follow-up/FollowUpScreen';
+
+// Shared & System Views
+import { VoiceBookingScreen } from './components/voice-booking/VoiceBookingScreen';
+import { MessagesScreen } from './components/messages/MessagesScreen';
+import { AnalyticsScreen } from './components/analytics/AnalyticsScreen';
+import { PatientMobilePortal } from './components/patient-portal/PatientMobilePortal';
+import { SettingsScreen } from './components/settings/SettingsScreen';
+
 // Global Overlays & Modals
 import { CallManagerModal } from './components/communication/CallManagerModal';
 import { GlobalSearchModal } from './components/search/GlobalSearchModal';
@@ -25,17 +47,6 @@ import { ScheduleModal } from './components/appointments/ScheduleModal';
 import { RescheduleModal } from './components/appointments/RescheduleModal';
 import { AddPatientModal } from './components/patients/AddPatientModal';
 import { CreateBillModal } from './components/billing/CreateBillModal';
-
-// Existing Doctor & Patient Views
-import { DoctorDashboard } from './components/dashboard/DoctorDashboard';
-import { ConsultationScreen } from './components/consultation/ConsultationScreen';
-import { VoiceBookingScreen } from './components/voice-booking/VoiceBookingScreen';
-import { TreatmentPlanScreen } from './components/treatment-plan/TreatmentPlanScreen';
-import { FollowUpScreen } from './components/follow-up/FollowUpScreen';
-import { MessagesScreen } from './components/messages/MessagesScreen';
-import { AnalyticsScreen } from './components/analytics/AnalyticsScreen';
-import { PatientMobilePortal } from './components/patient-portal/PatientMobilePortal';
-import { SettingsScreen } from './components/settings/SettingsScreen';
 
 const MainContent: React.FC = () => {
   const { currentNav, userRole } = useApp();
@@ -45,21 +56,42 @@ const MainContent: React.FC = () => {
     return <PatientMobilePortal />;
   }
 
-  // Doctor perspective for doctor role on dashboard or clinical
+  // Doctor Role Perspective
   if (userRole === 'doctor') {
     switch (currentNav) {
       case 'dashboard':
         return <DoctorDashboard />;
+      case 'appointments':
+        return <DoctorAppointmentsScreen />;
+      case 'patients':
+        return <PatientManagementScreen />;
+      case 'treatments':
+        return <TreatmentsScreen />;
+      case 'prescriptions':
+        return <PrescriptionsScreen />;
+      case 'medical-notes':
+        return <MedicalNotesScreen />;
+      case 'reports':
+        return <DoctorReportsScreen />;
+      case 'settings':
+        return <SettingsScreen />;
+
+      // Secondary Clinical Tools
       case 'records':
         return <ConsultationScreen />;
       case 'treatment-plans':
         return <TreatmentPlanScreen />;
       case 'follow-ups':
         return <FollowUpScreen />;
+      case 'analytics':
+        return <AnalyticsScreen />;
+
+      default:
+        return <DoctorDashboard />;
     }
   }
 
-  // Front Desk Receptionist Core Views (Default)
+  // Front Desk Receptionist Role Views
   switch (currentNav) {
     case 'dashboard':
       return <ReceptionistMainDashboard />;
@@ -78,6 +110,7 @@ const MainContent: React.FC = () => {
     case 'billing':
       return <ReceptionistBillingScreen />;
     case 'calls':
+    case 'reminders':
       return <RemindersAndCallsScreen />;
     case 'reports':
       return <ReceptionistReportsScreen />;
@@ -108,7 +141,7 @@ const MainContent: React.FC = () => {
 const AppLayout: React.FC = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
-      {/* Collapsible Sidebar */}
+      {/* Role-Based Collapsible Sidebar */}
       <Sidebar />
 
       {/* Main App Container */}
@@ -133,15 +166,77 @@ const AppLayout: React.FC = () => {
 
       {/* Auxiliary overlays */}
       <VoiceModal />
-      <ToastContainer />
     </div>
+  );
+};
+
+interface ProtectedRouteProps {
+  allowedRole: 'doctor' | 'receptionist';
+  children: React.ReactNode;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRole, children }) => {
+  const { isLoggedIn, userRole } = useApp();
+
+  // 1. Unauthenticated -> Redirect to /login
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // 2. Role mismatch -> Redirect to user's authorized role dashboard
+  if (userRole !== allowedRole) {
+    return <Navigate to={`/${userRole}`} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const MainAppRoutes: React.FC = () => {
+  const { isLoggedIn, userRole } = useApp();
+
+  return (
+    <Routes>
+      {/* 1. Login Route: Always renders LoginPage */}
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* 2. Doctor Protected Routes */}
+      <Route 
+        path="/doctor/*" 
+        element={
+          <ProtectedRoute allowedRole="doctor">
+            <AppLayout />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* 3. Receptionist Protected Routes */}
+      <Route 
+        path="/receptionist/*" 
+        element={
+          <ProtectedRoute allowedRole="receptionist">
+            <AppLayout />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* 4. Root & Catch-all Redirect */}
+      <Route 
+        path="/" 
+        element={<Navigate to={isLoggedIn ? `/${userRole}` : '/login'} replace />} 
+      />
+      <Route 
+        path="*" 
+        element={<Navigate to={isLoggedIn ? `/${userRole}` : '/login'} replace />} 
+      />
+    </Routes>
   );
 };
 
 export default function App() {
   return (
     <AppProvider>
-      <AppLayout />
+      <MainAppRoutes />
+      <ToastContainer />
     </AppProvider>
   );
 }

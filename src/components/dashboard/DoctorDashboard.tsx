@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   CalendarDays, 
@@ -26,10 +26,11 @@ export const DoctorDashboard: React.FC = () => {
     setCurrentNav, 
     setSelectedPatientId, 
     openVoiceModal,
-    showToast
+    showToast,
+    currentUser
   } = useApp();
 
-  const todaysAppointments = appointments.filter(a => a.date === '2026-09-12');
+  const todaysAppointments = appointments.filter(a => a.date === '2026-09-13');
   const waitingPatients = appointments.filter(a => a.status === 'waiting');
   const pendingFollowUps = followUps.filter(f => f.tabCategory === 'due_today' || f.status === 'Call required');
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.paid, 0);
@@ -51,16 +52,16 @@ export const DoctorDashboard: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-soft">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200">
-              Morning Clinical Session
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+              Operatory 1 • Clinical Session
             </span>
-            <span className="text-xs text-slate-400">Saturday, Sep 12, 2026</span>
+            <span className="text-xs text-slate-400">Sunday, 13 September 2026</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Good morning, Dr. Priya Mehta
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            Good morning, {currentUser?.name || 'Dr. Sarah Johnson'} <span className="inline-block">👋</span>
           </h1>
           <p className="text-sm sm:text-base text-slate-500 mt-0.5">
-            Here's what needs your attention today.
+            Here's your clinical schedule, waiting queue, and operative workflow today.
           </p>
         </div>
 
